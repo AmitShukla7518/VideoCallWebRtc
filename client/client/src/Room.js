@@ -20,17 +20,39 @@ export default function Room() {
 
     // get local media
     async function setupLocal() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        localStreamRef.current = stream;
-        if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    localStreamRef.current = stream;
+    if (localVideoRef.current) localVideoRef.current.srcObject = stream;
 
-        socketRef.current.emit('join-room', roomId);
-      } catch (err) {
-        console.error('Error accessing media devices.', err);
-        alert('Camera/microphone access is required.');
-      }
+    socketRef.current.emit('join-room', roomId);
+  } catch (err) {
+    console.error('Error accessing media devices.', err);
+
+    let message = 'Unable to access camera/microphone.';
+
+    switch (err.name) {
+      case 'NotAllowedError':
+        message = 'You have denied camera/microphone permissions. Please allow them in your browser settings.';
+        break;
+      case 'NotFoundError':
+        message = 'No camera or microphone found on this device.';
+        break;
+      case 'NotReadableError':
+      case 'TrackStartError':
+        message = 'Camera or microphone is already in use by another application or browser.';
+        break;
+      case 'OverconstrainedError':
+        message = 'The selected camera/microphone does not meet the required constraints.';
+        break;
+      default:
+        message = 'Unexpected error: ' + err.message;
     }
+
+    alert(message);
+  }
+}
+
 
     setupLocal();
 
